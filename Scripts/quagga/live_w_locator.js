@@ -1,4 +1,4 @@
-﻿$(function () {
+$(function () {
     var resultCollector = Quagga.ResultCollector.create({
         capture: true,
         capacity: 20,
@@ -24,19 +24,6 @@
     var App = {
         init: function () {
             var self = this;
-
-            $(".controls input[type=file]").on("change", function (e) {
-                if (e.target.files && e.target.files.length) {
-                    App.decode(URL.createObjectURL(e.target.files[0]));
-                }
-            });
-
-            $(".controls button").on("click", function (e) {
-                var input = document.querySelector(".controls input[type=file]");
-                if (input.files && input.files.length) {
-                    App.decode(URL.createObjectURL(input.files[0]));
-                }
-            });
 
             Quagga.init(this.state, function (err) {
                 if (err) {
@@ -96,35 +83,25 @@
             }
         },
         initCameraSelection: function () {
+            var streamLabel = Quagga.CameraAccess.getActiveStreamLabel();
 
-            try {
-                var streamLabel = Quagga.CameraAccess.getActiveStreamLabel();
-
-
-                return Quagga.CameraAccess.enumerateVideoDevices()
-                    .then(function (devices) {
-                        function pruneText(text) {
-                            return text.length > 30 ? text.substr(0, 30) : text;
-                        }
-                        var $deviceSelection = document.getElementById("deviceSelection");
-                        while ($deviceSelection.firstChild) {
-                            $deviceSelection.removeChild($deviceSelection.firstChild);
-                        }
-                        devices.forEach(function (device) {
-                            var $option = document.createElement("option");
-                            $option.value = device.deviceId || device.id;
-                            $option.appendChild(document.createTextNode(pruneText(device.label || device.deviceId || device.id)));
-                            $option.selected = streamLabel === device.label;
-                            $deviceSelection.appendChild($option);
-                        });
+            return Quagga.CameraAccess.enumerateVideoDevices()
+                .then(function (devices) {
+                    function pruneText(text) {
+                        return text.length > 30 ? text.substr(0, 30) : text;
+                    }
+                    var $deviceSelection = document.getElementById("deviceSelection");
+                    while ($deviceSelection.firstChild) {
+                        $deviceSelection.removeChild($deviceSelection.firstChild);
+                    }
+                    devices.forEach(function (device) {
+                        var $option = document.createElement("option");
+                        $option.value = device.deviceId || device.id;
+                        $option.appendChild(document.createTextNode(pruneText(device.label || device.deviceId || device.id)));
+                        $option.selected = streamLabel === device.label;
+                        $deviceSelection.appendChild($option);
                     });
-
-            }
-            catch (error) {
-                document.getElementById("errorMsg").textContent = error;
-            }
-
-
+                });
         },
         attachListeners: function () {
             var self = this;
@@ -184,12 +161,6 @@
             $(".controls").off("click", "button.stop");
             $(".controls .reader-config-group").off("change", "input, select");
         },
-        decode: function (src) {
-            var self = this,
-                config = $.extend({}, self.state, { src: src });
-
-            Quagga.decodeSingle(config, function (result) { });
-        },
         applySetting: function (setting, value) {
             var track = Quagga.CameraAccess.getActiveTrack();
             if (track && typeof track.getCapabilities === 'function') {
@@ -232,9 +203,6 @@
                     return {
                         deviceId: value
                     };
-                },
-                size: function (value) {
-                    return parseInt(value);
                 }
             },
             numOfWorkers: function (value) {
@@ -273,11 +241,11 @@
                 patchSize: "medium",
                 halfSample: true
             },
-            numOfWorkers: 4,
+            numOfWorkers: 2,
             frequency: 10,
             decoder: {
                 readers: [{
-                    format: "upc_reader",
+                    format: "code_128_reader",
                     config: {}
                 }]
             },
@@ -287,34 +255,13 @@
     };
 
     App.init();
-    function calculateRectFromArea(canvas, area) {
-        var canvasWidth = canvas.width,
-            canvasHeight = canvas.height,
-            top = parseInt(area.top) / 100,
-            right = parseInt(area.right) / 100,
-            bottom = parseInt(area.bottom) / 100,
-            left = parseInt(area.left) / 100;
 
-        top *= canvasHeight;
-        right = canvasWidth - canvasWidth * right;
-        bottom = canvasHeight - canvasHeight * bottom;
-        left *= canvasWidth;
-
-        return {
-            x: left,
-            y: top,
-            width: right - left,
-            height: bottom - top
-        };
-    }
     Quagga.onProcessed(function (result) {
         var drawingCtx = Quagga.canvas.ctx.overlay,
-            drawingCanvas = Quagga.canvas.dom.overlay,
-            area;
+            drawingCanvas = Quagga.canvas.dom.overlay;
 
         if (result) {
             if (result.boxes) {
-
                 drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
                 result.boxes.filter(function (box) {
                     return box !== result.box;
@@ -323,34 +270,18 @@
                 });
             }
 
-
-
             if (result.box) {
                 Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "#00F", lineWidth: 2 });
             }
 
             if (result.codeResult && result.codeResult.code) {
-
                 Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, drawingCtx, { color: 'red', lineWidth: 3 });
-            }
-
-            if (App.state.inputStream.area) {
-                area = calculateRectFromArea(drawingCanvas, App.state.inputStream.area);
-                drawingCtx.strokeStyle = "#0F0";
-                drawingCtx.strokeRect(area.x, area.y, area.width, area.height);
             }
         }
     });
 
     Quagga.onDetected(function (result) {
         var code = result.codeResult.code;
-
-        var bcode = document.getElementById("barcode");
-
-        console.log(code);
-        bcode.textContent = code;
-
-
 
         if (App.lastResult !== code) {
             App.lastResult = code;

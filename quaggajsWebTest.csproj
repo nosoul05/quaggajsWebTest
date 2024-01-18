@@ -122,9 +122,13 @@
     <Content Include="Content\bootstrap.rtl.min.css" />
     <Content Include="Content\quagga\style.css" />
     <Content Include="Content\Site.css" />
+    <Content Include="css\colors.css" />
+    <Content Include="css\fonts.css" />
+    <Content Include="css\styles.css" />
     <Content Include="Default.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
+    <Content Include="ipad.html" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
@@ -160,6 +164,8 @@
     <Content Include="Scripts\jquery-3.4.1.slim.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Scripts\quagga\adapter-latest.js" />
+    <Content Include="Scripts\quagga\jquery-1.9.0.min.js" />
+    <Content Include="Scripts\quagga\live_w_locator.js" />
     <Content Include="Scripts\quagga\qCamtest.js" />
     <Content Include="Scripts\quagga\quagga.js" />
     <Content Include="Scripts\quagga\quagga.min.js" />

@@ -1,0 +1,225 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+    <title>index</title>
+    <meta name="description" content="" />
+
+
+    <meta name="viewport" content="width=device-width; initial-scale=1.0; user-scalable=no" />
+    <link rel="stylesheet" type="text/css" href="css/styles.css" />
+</head>
+
+<body>
+    <header>
+        <div class="headline">
+            <h1>QuaggaJS</h1>
+            <h2>An advanced barcode-scanner written in JavaScript</h2>
+        </div>
+        <label id="lb_msg"></label>
+    </header>
+    <div id="scanner-container"></div>
+
+    <input id="tb_Barcode" />
+    <button type="button" onclick="startScanner()">test</button>
+    <section id="container" class="container">
+        <h3>The user's camera</h3>
+        <p>
+        </p>
+        <div class="controls">
+            <fieldset class="input-group">
+                <button class="stop">Stop</button>
+            </fieldset>
+            <fieldset class="reader-config-group">
+                <label>
+                    <span>Barcode-Type</span>
+                    <select name="decoder_readers">
+                        <option value="code_128" selected="selected">Code 128</option>
+                        <option value="code_39">Code 39</option>
+                        <option value="code_39_vin">Code 39 VIN</option>
+                        <option value="ean">EAN</option>
+                        <option value="ean_extended">EAN-extended</option>
+                        <option value="ean_8">EAN-8</option>
+                        <option value="upc">UPC</option>
+                        <option value="upc_e">UPC-E</option>
+                        <option value="codabar">Codabar</option>
+                        <option value="i2of5">Interleaved 2 of 5</option>
+                        <option value="2of5">Standard 2 of 5</option>
+                        <option value="code_93">Code 93</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Resolution (width)</span>
+                    <select name="input-stream_constraints">
+                        <option value="320x240">320px</option>
+                        <option selected="selected" value="640x480">640px</option>
+                        <option value="800x600">800px</option>
+                        <option value="1280x720">1280px</option>
+                        <option value="1600x960">1600px</option>
+                        <option value="1920x1080">1920px</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Patch-Size</span>
+                    <select name="locator_patch-size">
+                        <option value="x-small">x-small</option>
+                        <option value="small">small</option>
+                        <option selected="selected" value="medium">medium</option>
+                        <option value="large">large</option>
+                        <option value="x-large">x-large</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Half-Sample</span>
+                    <input type="checkbox" checked="checked" name="locator_half-sample" />
+                </label>
+                <label>
+                    <span>Workers</span>
+                    <select name="numOfWorkers">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option selected="selected" value="4">4</option>
+                        <option value="8">8</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Camera</span>
+                    <select name="input-stream_constraints" id="deviceSelection">
+                    </select>
+                </label>
+                <label style="display: none">
+                    <span>Zoom</span>
+                    <select name="settings_zoom"></select>
+                </label>
+                <label style="display: none">
+                    <span>Torch</span>
+                    <input type="checkbox" name="settings_torch" />
+                </label>
+            </fieldset>
+        </div>
+        <div id="result_strip">
+            <ul class="thumbnails"></ul>
+            <ul class="collector"></ul>
+        </div>
+        <div id="interactive" class="viewport"></div>
+    </section>
+
+    <script>
+
+        var _scannerIsRunning = false;
+
+        function startScanner() {
+
+            document.getElementById("lb_msg").textContent = "starting..."
+
+            try {
+
+
+
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector('#scanner-container'),
+                        constraints: {
+                            width: 480,
+                            height: 320,
+                            // facingMode: "environment"
+                        },
+                    },
+                    decoder: {
+                        readers: [
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader",
+                            "code_39_reader",
+                            "code_39_vin_reader",
+                            "codabar_reader",
+                            "upc_reader",
+                            "upc_e_reader",
+                            "i2of5_reader"
+                        ],
+                        debug: {
+                            showCanvas: true,
+                            showPatches: true,
+                            showFoundPatches: true,
+                            showSkeleton: true,
+                            showLabels: true,
+                            showPatchLabels: true,
+                            showRemainingPatchLabels: true,
+                            boxFromPatches: {
+                                showTransformed: true,
+                                showTransformedBox: true,
+                                showBB: true
+                            }
+                        }
+                    },
+
+                }, function (err) {
+                    if (err) {
+                        console.log(err);
+                        document.getElementById("MainContent_err_msg").textContent = err;
+                        return
+                    }
+
+                    console.log("Initialization finished. Ready to start");
+                    Quagga.start();
+
+                    // Set flag to is running
+                    _scannerIsRunning = true;
+                });
+            }
+            catch (error) {
+                // alert("error:" + error);
+                //document.getElementById("MainContent_err_msg").textContent = error;
+
+            }
+
+
+            Quagga.onProcessed(function (result) {
+                var drawingCtx = Quagga.canvas.ctx.overlay,
+                    drawingCanvas = Quagga.canvas.dom.overlay;
+
+                if (result) {
+                    if (result.boxes) {
+                        drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+                        result.boxes.filter(function (box) {
+                            return box !== result.box;
+                        }).forEach(function (box) {
+                            Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 2 });
+                        });
+                    }
+
+                    if (result.box) {
+                        Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "#00F", lineWidth: 2 });
+                    }
+
+                    if (result.codeResult && result.codeResult.code) {
+                        Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, drawingCtx, { color: 'red', lineWidth: 3 });
+                    }
+                }
+            });
+
+
+            Quagga.onDetected(function (result) {
+                console.log("Barcode detected and processed : [" + result.codeResult.code + "]", result);
+                var tbBarcode = document.getElementById("tb_Barcode");
+
+                tbBarcode.textContent = result.codeResult.code;
+
+            });
+        }
+
+    </script>
+    <footer>
+    </footer>
+
+    <script src="Scripts/quagga/jquery-1.9.0.min.js"></script>
+    <script src="Scripts/quagga/adapter-latest.js"></script>
+    <script src="Scripts/quagga/quagga.min.js"></script>
+    <script src="Scripts/quagga/live_w_locator.js"></script>
+</body>
+</html>
