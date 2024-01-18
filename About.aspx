@@ -12,11 +12,11 @@
     <asp:TextBox runat="server" ID="hdnBarcode"></asp:TextBox>
 
     <asp:button runat="server" ID="btnScan" Text="btn scan" />
-    <asp:UpdatePanel runat="server" ID="up">
+  <%--  <asp:UpdatePanel runat="server" ID="up">
         <ContentTemplate>
 
         </ContentTemplate>
-    </asp:UpdatePanel>
+    </asp:UpdatePanel>--%>
 
 
     <script type="text/javascript">
